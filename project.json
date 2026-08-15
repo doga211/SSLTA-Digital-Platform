@@ -1,0 +1,10 @@
+{
+  "project": "SSLTA Official Website Prototype",
+  "organization": "South Sudan Lawn Tennis Association",
+  "shortName": "SSLTA",
+  "type": "presentation-prototype",
+  "entry": "index.html",
+  "framework": "static-html",
+  "buildRequired": false,
+  "deployment": ["GitHub Pages", "Vercel"]
+}
