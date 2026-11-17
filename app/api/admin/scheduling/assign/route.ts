@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/supabase/server'
 import { requireAdmin } from '@/lib/auth/require-admin'
 
 export async function POST(request: Request) {
@@ -14,7 +14,16 @@ export async function POST(request: Request) {
     const start = new Date(scheduledStart)
     const end = new Date(start.getTime() + durationMinutes * 60000)
     if (Number.isNaN(start.getTime()) || durationMinutes <= 0) return NextResponse.json({error:'Invalid schedule.'},{status:400})
-    const supabase = await createClient()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
+      {
+        cookies: {
+          getAll: async () => [],
+          setAll: async () => {},
+        },
+      }
+    )
     if (!supabase) return NextResponse.json({error:'Supabase is not configured.'},{status:503})
     const {data: match, error: matchError} = await supabase.from('matches').select('id,player_a_id,player_b_id').eq('id',matchId).single()
     if (matchError || !match) return NextResponse.json({error:matchError?.message ?? 'Match not found.'},{status:404})

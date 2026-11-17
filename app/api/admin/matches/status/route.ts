@@ -1,5 +1,6 @@
+import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/supabase/server'
 import { requireAdmin } from '@/lib/auth/require-admin'
 
 const allowed = new Set(['scheduled','called','on_court','paused','completed','delayed','cancelled'])
@@ -17,4 +18,27 @@ export async function POST(request: Request) {
     await supabase.from('match_schedule').update({schedule_status:liveStatus==='on_court'?'on_court':liveStatus==='completed'?'completed':liveStatus,updated_by:profile.id,updated_at:now}).eq('match_id',matchId)
     return NextResponse.json({matchId,liveStatus})
   } catch(error:any){return NextResponse.json({error:error?.message??'Unable to update match status.'},{status:400})}
+}
+async function createClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!url || !key) return null
+
+  const cookieStore = await cookies()
+
+  return createServerClient(url, key, {
+    cookies: {
+      getAll: () => cookieStore.getAll(),
+      setAll: (cookiesToSet) => {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options)
+          })
+        } catch {
+          // Ignore cookie write errors in server actions/routes.
+        }
+      },
+    },
+  })
 }

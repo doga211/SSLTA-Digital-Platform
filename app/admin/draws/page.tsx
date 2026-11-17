@@ -1,9 +1,26 @@
 import { FederationModulePage } from "@/components/FederationModulePage";
 import { DrawGenerator } from "@/components/DrawGenerator";
-import { createClient } from "@/lib/supabase/server";
+import { createServerClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 
 export default async function Page(){
-  const s=await createClient();
+  const cookieStore = await cookies();
+  const s = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll: () => cookieStore.getAll(),
+        setAll: (cookiesToSet) => {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+          } catch {
+            // Cookies cannot be written while rendering a Server Component.
+          }
+        },
+      },
+    },
+  );
   const {data: categories}=s?await s.from("tournament_categories").select("id,name").order("name"): {data:[]};
   const {data: draws}=s?await s.from("draws").select("id,draw_type,draw_size,status,tournament_categories(name,tournaments(name))").order("created_at",{ascending:false}).limit(50):{data:[]};
   return <FederationModulePage title="Draw Management" description="Prepare, publish and lock competition draws with deterministic seeding and BYE handling.">

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { requireAdmin } from '@/lib/auth/require-admin'
 import { validateCompletedScore } from '@/lib/tournament/scoring'
+import { createClient } from '@supabase/supabase-js'
 
 export async function POST(request: Request) {
   try {
@@ -13,8 +13,14 @@ export async function POST(request: Request) {
     if (!matchId || !scoreA || !scoreB) return NextResponse.json({ error: 'matchId, scoreA and scoreB are required.' }, { status: 400 })
 
     const parsed = validateCompletedScore(scoreA, scoreB)
-    const supabase = await createClient()
-    if (!supabase) return NextResponse.json({ error: 'Supabase is not configured.' }, { status: 503 })
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    if (!supabaseUrl || !supabaseKey) {
+      return NextResponse.json({ error: 'Supabase is not configured.' }, { status: 503 })
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey)
 
     const { data: match, error: matchError } = await supabase
       .from('matches')

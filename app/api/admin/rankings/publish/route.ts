@@ -1,12 +1,29 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
+import { createServerClient } from '@/lib/supabase/server'
+
 import { requireAdmin } from '@/lib/auth/require-admin'
 import { rankSnapshot, stableSnapshotChecksum } from '@/lib/tournament/publication'
 export async function POST(request:Request){
   try{
     const profile=await requireAdmin(['super_admin','admin','ranking_officer']); const body=await request.json(); const seasonId=String(body.seasonId??'')
     if(!seasonId)return NextResponse.json({error:'seasonId is required.'},{status:400})
-    const supabase=await createClient(); if(!supabase)return NextResponse.json({error:'Supabase is not configured.'},{status:503})
+    const cookieStore = await cookies()
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    if(!supabaseUrl || !supabaseAnonKey)return NextResponse.json({error:'Supabase is not configured.'},{status:503})
+    const supabase=createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll: () => cookieStore.getAll(),
+        setAll: (cookiesToSet) => {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
+          } catch {
+            // Ignore cookie write failures in admin routes.
+          }
+        },
+      },
+    })
     const {data:season,error:seasonError}=await supabase.from('ranking_seasons').select('id,name,category,status').eq('id',seasonId).single()
     if(seasonError||!season)return NextResponse.json({error:seasonError?.message??'Season not found.'},{status:404})
     if(!['active','frozen','published'].includes(season.status))return NextResponse.json({error:'Season must be active, frozen or published before publication.'},{status:400})

@@ -1,12 +1,38 @@
-import { createClient } from "@/lib/supabase/server";
+import { createServerClient as createSupabaseServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 import type { BlogCategory, BlogPost } from "./types";
+
+async function getServerClient() {
+  const cookieStore = await cookies();
+
+  return createSupabaseServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {
+            // The server component cannot set cookies.
+          }
+        },
+      },
+    }
+  );
+}
 
 export async function getPublishedPosts(options?: {
   category?: string;
   search?: string;
   limit?: number;
 }) {
-  const supabase = await createClient();
+  const supabase = await getServerClient();
   let query = supabase.from("blog_posts").select(`
     *, category:blog_categories(id,name,slug,description,display_order,is_active)
   `).eq("status","published").not("published_at","is",null)
@@ -25,7 +51,7 @@ export async function getPublishedPosts(options?: {
 }
 
 export async function getFeaturedPosts() {
-  const supabase = await createClient();
+  const supabase = await getServerClient();
   const { data, error } = await supabase.from("blog_posts").select(`*,category:blog_categories(*)`)
     .eq("status","published").eq("is_featured",true).not("published_at","is",null)
     .lte("published_at",new Date().toISOString()).order("published_at",{ascending:false}).limit(5);
@@ -34,7 +60,7 @@ export async function getFeaturedPosts() {
 }
 
 export async function getBlogPostBySlug(slug: string) {
-  const supabase = await createClient();
+  const supabase = await getServerClient();
   const { data, error } = await supabase.from("blog_posts").select(`
     *, category:blog_categories(*), tags:blog_post_tags(tag:blog_tags(*))
   `).eq("slug",slug).eq("status","published").not("published_at","is",null)
@@ -48,7 +74,7 @@ export async function getBlogPostBySlug(slug: string) {
 }
 
 export async function getBlogCategories() {
-  const supabase = await createClient();
+  const supabase = await getServerClient();
   const { data, error } = await supabase.from("blog_categories").select("*")
     .eq("is_active",true).order("display_order",{ascending:true});
   if (error) throw new Error(`Failed to load categories: ${error.message}`);
@@ -56,7 +82,7 @@ export async function getBlogCategories() {
 }
 
 export async function getRelatedPosts(postId: string, categoryId: string | null) {
-  const supabase = await createClient();
+  const supabase = await getServerClient();
   let query = supabase.from("blog_posts").select(`*,category:blog_categories(*)`)
     .eq("status","published").neq("id",postId).not("published_at","is",null)
     .lte("published_at",new Date().toISOString()).order("published_at",{ascending:false}).limit(4);

@@ -1,10 +1,35 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 import type { SSLTARole } from './roles'
 
+async function createSupabaseClient() {
+  const cookieStore = await cookies()
+
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options),
+            )
+          } catch {
+            // Cookie writes may be unavailable in Server Components.
+          }
+        },
+      },
+    },
+  )
+}
+
 export async function getCurrentProfile() {
-  const supabase = await createClient()
-  if (!supabase) return null
+  const supabase = await createSupabaseClient()
 
   const { data: claimsData } = await supabase.auth.getClaims()
   const userId = claimsData?.claims?.sub
