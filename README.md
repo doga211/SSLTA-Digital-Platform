@@ -1,113 +1,63 @@
-# SSLTA Official Website Prototype
+# SSLTA Professional Next.js App Router — V2 Federation UI
 
-**South Sudan Lawn Tennis Association (SSLTA)**
+This version upgrades the existing SSLTA Next.js application using the approved SSLTA website prototype as the visual and information-architecture reference.
 
-This repository contains the presentation prototype of the SSLTA official website, prepared for review by SSLTA Management before final development.
+## Implemented
 
-## Prototype contents
+- Prototype masthead and federation-style navigation.
+- Exact prototype brand palette:
+  - SSLTA Blue `#2457A6`
+  - Federation Blue `#173F82`
+  - SSLTA Red `#D71920`
+  - SSLTA Green `#0C8B4A`
+  - SSLTA Gold `#F5C400`
+  - Soft background `#F5F7FA`
+  - Federation line `#E7E9ED`
+- Prototype homepage structure:
+  - Hero / Tennis for All
+  - Five federation metrics
+  - Upcoming Tournaments
+  - National Rankings
+  - Latest News
+  - Vision / Mission / Values
+  - Development & Community
+  - SSLTA Membership
+  - Competition calendar
+  - Join SSLTA call-to-action
+- Public routes aligned to the prototype:
+  - `/`
+  - `/about`
+  - `/players`
+  - `/tournaments`
+  - `/rankings`
+  - `/development`
+  - `/membership`
+  - `/gallery`
+  - `/news`
+  - `/contact`
+- Responsive mobile navigation and layouts.
+- Semantic metadata and improved accessibility labels.
+- Removed the external Google Fonts dependency from global CSS so the UI is not blocked by remote font loading.
+- Existing admin visual system retained and recolored to the same federation palette.
 
-- Approved SSLTA branding and logo
-- SSLTA brand colors
-- Real SSLTA tournament and community photographs supplied for the prototype
-- Responsive homepage
-- About / Vision / Mission / Values
-- Programs and junior development
-- Tournament calendar
-- Rankings interface
-- News and events
-- Membership / Join SSLTA prototype
-- Player development section
-- Prototype login interaction
-- Mobile-responsive navigation
+## Federation alignment direction
 
-## Technology
+The UI and information architecture are structured for a national sport federation environment and future integration with SSNOC / international tennis competition systems. The application does **not** claim formal accreditation or compliance with any governing body; formal compliance depends on SSLTA-approved constitution, regulations, safeguarding policies, competition rules, ranking regulations, governance procedures and official federation requirements.
 
-This review prototype is intentionally lightweight:
+## Next production phase
 
-- HTML5
-- CSS3
-- Vanilla JavaScript
-- No database
-- No backend
-- No build step
-- No external framework required
+The next engineering phase should connect this presentation layer to the SSLTA management platform:
 
-The site is contained in `index.html`, making it directly deployable to GitHub Pages or Vercel.
+1. Supabase Auth + official accounts
+2. RBAC and PostgreSQL RLS
+3. Player/member/club registry
+4. Tournament sanctioning and registration
+5. Draws, scheduling, courts and officials
+6. Verified match results
+7. Ranking calculation, history, freeze and publication
+8. National teams and development programmes
+9. Governance documents and controlled publication
+10. Audit logs, notifications and reporting
+11. Production QA, accessibility, performance and security review
 
-## Deploy with GitHub
-
-1. Create a new GitHub repository, for example:
-
-   `sslta-official-website`
-
-2. Upload the contents of this folder.
-3. Commit the files to the `main` branch.
-4. The main website file must remain named:
-
-   `index.html`
-
-## Deploy with Vercel
-
-### Option A — Import the GitHub repository
-
-1. Sign in to Vercel.
-2. Select **Add New → Project**.
-3. Import the GitHub repository.
-4. For this static prototype, no framework is required.
-5. Deploy the project.
-6. Vercel will generate a shareable HTTPS URL for the SSLTA Management review.
-
-### Option B — Vercel CLI
-
-From the project folder:
-
-```bash
-vercel
-```
-
-For production deployment:
-
-```bash
-vercel --prod
-```
-
-No build command is required for this prototype.
-
-## Important
-
-This is a **visual and functional presentation prototype**, not the final production SSLTA platform.
-
-The final development phase can introduce:
-
-- SSLTA CMS
-- Secure administrator portal
-- Player registration
-- Club registration
-- Tournament management
-- Match scheduling and results
-- National ranking engine
-- Player profiles
-- Coach and official profiles
-- Membership management
-- Online applications and payments
-- News/media management
-- Document management
-- Statistics and analytics
-- Database and API
-- Authentication and role-based access control
-- Hosting, domain and production security
-
-## Review objective
-
-The prototype should be presented to SSLTA Management for approval of:
-
-1. Website structure
-2. Branding
-3. Navigation
-4. Content direction
-5. Photography
-6. Programs and sections
-7. Tournament/ranking presentation
-8. Overall digital identity
-
-After management approval, the approved prototype can be converted into the production SSLTA digital platform.
+The current release intentionally preserves the existing application architecture so the public site can become the presentation layer of the federation management system rather than a separate data source.

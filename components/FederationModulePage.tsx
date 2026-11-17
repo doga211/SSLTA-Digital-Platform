@@ -1,0 +1,3 @@
+import Link from "next/link";
+import { requireAdmin } from "@/lib/auth/require-admin";
+export async function FederationModulePage({title,description,children}:{title:string;description:string;children:React.ReactNode}){const p=await requireAdmin();return <main className="admin-main"><div className="admin-title"><div><div className="eyebrow">SSLTA FEDERATION MANAGEMENT</div><h1>{title}</h1><p>{description}</p></div><div className="status">{String(p.role).replaceAll("_"," ")}</div></div><div className="admin-panel"><div className="module-actions"><Link href="/admin/dashboard">← Dashboard</Link></div>{children}</div></main>}
