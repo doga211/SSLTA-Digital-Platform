@@ -1,6 +1,8 @@
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase/server'
+import { createServerClient } from "@supabase/ssr";
+
+
 import { requireAdmin } from '@/lib/auth/require-admin'
 
 const allowed = new Set(['scheduled','called','on_court','paused','completed','delayed','cancelled'])
@@ -20,8 +22,9 @@ export async function POST(request: Request) {
   } catch(error:any){return NextResponse.json({error:error?.message??'Unable to update match status.'},{status:400})}
 }
 async function createClient() {
+  
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const key = process.env.NEXT_PUBLIC_PUBLISHABLE_KEY
 
   if (!url || !key) return null
 
