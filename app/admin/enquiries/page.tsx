@@ -1,3 +1,58 @@
-import { AdminShell } from "@/components/AdminShell"; import { requireAdmin } from "@/lib/supabase-server"; import { updateEnquiryStatus } from "@/app/admin/actions"; import { redirect } from "next/navigation";
-export const dynamic="force-dynamic";
-export default async function Enquiries({searchParams}:{searchParams:Promise<{saved?:string;error?:string}>}){const [{supabase,profile},params]=await Promise.all([requireAdmin(),searchParams]);if(!supabase||!profile)redirect("/admin?error=unauthorized");const {data,error}=await supabase.from("contact_enquiries").select("id,full_name,email,phone,enquiry_type,message,status,created_at").order("created_at",{ascending:false});return <AdminShell><main className="admin-main"><div className="admin-title"><div><h1>Contact Enquiries</h1><p>Manage messages submitted through the public website.</p></div></div>{params.saved&&<p className="form-success">Enquiry status updated.</p>}{params.error&&<p className="form-error">Could not update the enquiry.</p>}{error?<p className="form-error">{error.message}</p>:<div className="admin-panel"><h3>Enquiries ({data?.length??0})</h3><div className="table-wrap"><table className="table"><thead><tr><th>Sender</th><th>Type</th><th>Message</th><th>Submitted</th><th>Status / action</th></tr></thead><tbody>{data?.length?data.map((e:any)=><tr key={e.id}><td><b>{e.full_name}</b><small className="table-sub">{e.email}<br/>{e.phone}</small></td><td>{e.enquiry_type}</td><td className="message-cell">{e.message}</td><td>{new Date(e.created_at).toLocaleDateString()}</td><td><form action={updateEnquiryStatus} className="inline-admin-form"><input type="hidden" name="id" value={e.id}/><select name="status" defaultValue={e.status}><option value="new">New</option><option value="in_progress">In progress</option><option value="resolved">Resolved</option><option value="closed">Closed</option></select><button className="btn btn-primary">Save</button></form></td></tr>):<tr><td colSpan={5}>No contact enquiries received.</td></tr>}</tbody></table></div></div>}</main></AdminShell>}
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import { FederationModulePage } from "@/components/FederationModulePage";
+import { EnquiriesOverview } from "@/components/EnquiriesOverview";
+
+export const dynamic = "force-dynamic";
+
+export default async function AdminEnquiriesPage() {
+  const cookieStore = await cookies();
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    return (
+      <FederationModulePage title="New Enquiries & Forms" description="Website submissions and membership enquiries.">
+        <p className="empty-state">Supabase configuration is incomplete.</p>
+      </FederationModulePage>
+    );
+  }
+
+  const supabase = createServerClient(url, key, {
+    cookies: {
+      getAll: () => cookieStore.getAll(),
+      setAll: (items) => {
+        try {
+          items.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options),
+          );
+        } catch {
+          // Server Components cannot always write cookies during rendering.
+        }
+      },
+    },
+  });
+
+  // RLS must restrict these records to authorised administrators.
+  // Select existing rows without assuming column names that may differ by deployment.
+  const [contacts, memberships] = await Promise.all([
+    supabase.from("contact_enquiries").select("*").order("created_at", { ascending: false }).limit(100),
+    supabase.from("membership_applications").select("*").order("created_at", { ascending: false }).limit(100),
+  ]);
+
+  return (
+    <FederationModulePage
+      title="New Enquiries & Forms"
+      description="Review website contact enquiries and membership applications."
+    >
+      <EnquiriesOverview
+        contacts={contacts.data ?? []}
+        memberships={memberships.data ?? []}
+        contactError={contacts.error?.message ?? null}
+        membershipError={memberships.error?.message ?? null}
+      />
+    </FederationModulePage>
+  );
+}

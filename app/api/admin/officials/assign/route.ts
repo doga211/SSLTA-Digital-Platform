@@ -75,13 +75,38 @@
 
 
 
-
+import { cookies } from 'next/headers'
 
 import { NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServerClient } from "@supabase/ssr";
 import { requireAdmin } from "@/lib/auth/require-admin";
 
 export async function POST(request: Request) {
+  async function createClient() {
+    
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.NEXT_PUBLIC_PUBLISHABLE_KEY
+  
+    if (!url || !key) return null
+  
+    const cookieStore = await cookies()
+  
+    return createServerClient(url, key, {
+      cookies: {
+        getAll: () => cookieStore.getAll(),
+        setAll: (cookiesToSet) => {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options)
+            })
+          } catch {
+            // Ignore cookie write errors in server actions/routes.
+          }
+        },
+      },
+    })
+  }
+  
   try {
     const profile = await requireAdmin([
       "super_admin",
@@ -101,7 +126,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const supabase = await createServerClient();
+    const supabase = await createClient();
+    if (!supabase) {
+      return NextResponse.json(
+        { error: "Supabase is not configured." },
+        { status: 503 }
+      );
+    }
 
     const { data: official } = await supabase
       .from("profiles")

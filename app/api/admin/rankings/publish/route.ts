@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { createServerClient } from '@/lib/supabase/server'
+
+import { createServerClient } from "@supabase/ssr";
 
 import { requireAdmin } from '@/lib/auth/require-admin'
 import { rankSnapshot, stableSnapshotChecksum } from '@/lib/tournament/publication'

@@ -32,6 +32,7 @@ export function Footer() {
           <p>Official SSLTA communications</p>
           <Link href="/contact">Contact the Secretariat</Link>
           <Link href="/admin">Management Portal</Link>
+          <p> <Number>+211920200020 </Number> </p>
         </div>
       </div>
       <div className="container footer-bottom">

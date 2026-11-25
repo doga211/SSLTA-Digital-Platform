@@ -13,11 +13,33 @@
   // );
 
 import { FederationModulePage } from "@/components/FederationModulePage";
-import { createServerClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
+export default async function Page()
+{
 
-export default async function Page() {
-const supabase = await createServerClient();
 
+      const cookieStore = await cookies();
+      const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+        {
+          cookies: {
+            getAll() {
+              return cookieStore.getAll();
+            },
+            setAll(cookiesToSet) {
+              try {
+                for (const { name, value, options } of cookiesToSet) {
+                  cookieStore.set(name, value, options);
+                }
+              } catch {
+                // Ignore cookie write failures in server components.
+              }
+            }
+          }
+        }
+      );
   const { data } = await supabase
     .from("development_programs")
     .select("id,name,programme_type,venue,start_date,end_date,status")
